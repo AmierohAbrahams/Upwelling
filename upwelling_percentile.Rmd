@@ -89,6 +89,8 @@ percentile <- 30840/60189*100 # Count values
 # Percentile value of 50
 
 ###################################################Percentile classification#################################################
+# https://www.dummies.com/education/math/statistics/how-to-calculate-percentiles-in-statistics/
+
 # percentile = 70
 0.7*60189
 # 42132
@@ -117,6 +119,13 @@ SACTN_TRY3 <- SACTN_split %>%
 SACTN_TRY4 <- SACTN_split %>%
   arrange(temp) %>% 
   slice(1:24076) # Upwelling temp = 13 degrees
+
+# Percentile = 30
+0.3*60189
+# 18056
+SACTN_TRY5 <- SACTN_split %>%
+  arrange(temp) %>% 
+  slice(1:18056) # Upwelling temp = 12.4degrees
 
 ############################################################################################################################
 
