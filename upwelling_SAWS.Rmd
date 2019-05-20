@@ -1,0 +1,149 @@
+---
+title: "upwelling_SAWS"
+author: "Amieroh Abrahams"
+date: "12 May 2019"
+output: html_document
+---
+
+# Upwelling
+  # Script for the forecasting data obtained from the SAWS
+
+Upwelling is primarily caused by alongshore, equator ward winds. These winds are caused by cross-shore atmospheric pressure gradients, and these gradients occur predominantly during heating periods. Upwelling is defined as the process whereby cold, nutrient rich, high concentrated CO2, low pH, and low oxygenated waters are pushed to the surface as a result of alongshore winds interacting with the earth’s rotation.
+
+# Upwelling indeces
+  # Determining upwelling index from wind data (SAWS)
+  # Index Equation from Fielding & Davis 1989 paper
+
+$$ UpwellingIndex = μ{(Cosθ − 160)}$$
+
+In this equation μ represents the wind speed (m/s) and θ represents the wind direction which is measured in degrees. The 160 degrees is used as this refers to the angle of the coastline. This equation is largely dependant on wind speed and direction data in order to determing the intensity of the upwelling event. Wind data were obtained daily from the South African Weather Service (SAWS). This wind data was then matched to the date at which temperature were collected. With this data the upwelling index was determined.
+
+# Load libraries
+
+```{r}
+library(tidyverse)
+library(openair)
+library(ggplot2)
+```
+
+# Steps
+  - Use the circular function 
+  - Determine daily wind data obtained from 3hr intervals
+
+```{r}
+# Save the txt file obtained as wind1
+# Read in the newly obtained wind data
+
+wind_1 <- read.delim("Data_P1/Wind_data/wind_data.txt(SAWS)/wind1/wind1.txt", na.strings = "", 
+                     col.names = c("station_number", "station_name", "date", "hour", "sub", "speed", "dir"))
+
+# Once the data is loaded run the function
+
+# Slecting the important columns for each of the datasets
+wind_fix <- function(df){
+wind <- df %>% 
+  select(station_name, date, hour, dir, speed) %>%  #column names
+  mutate(date = as.Date(as.character(date)),
+         hour = as.numeric(as.character(hour)), 
+         dir = as.numeric(as.character(dir)),
+         speed = as.numeric(as.character(speed)))
+}
+
+wind_1 <- wind_fix(df = wind_1)
+
+# If wind data sites need to be renamed use the following function
+
+renaming_sites_1 <- function(df) {
+  sites <- df %>%
+      mutate(temp_sites = case_when(station_name  == "CAPE TOWN SLANGKOP" ~ "Kommetjie")) # Here only one site is used. If more sites are used and need to be renamed....do it here.
+  return(sites)
+}
+
+wind <-  renaming_sites_1(df = wind_1)
+wind <- wind %>% 
+  na.omit()
+
+# Now save the cleaned out wind data (Saved here as wind)
+save(wind, file = "data/wind.Rdata")
+
+wind_data <- wind %>% 
+  group_by(date, hour, site) # If only one site is used then this group_by 'site' is not necessary
+
+# For daily data
+wind_daily <- wind_data %>% 
+  dplyr::group_by(date) %>% 
+  dplyr::summarise(dir_circ = round(mean.circular(circular(dir, units = "degrees")), 2),
+                   mean_speed = round(mean(speed),2)) %>% 
+  mutate(day = day(date))
+
+# Now save the daily data
+save(wind_daily, file = "data/wind_daily.RData")
+```
+
+# Visual representations of the data 
+  - Wind rose diagrams
+
+```{r}
+?windRose
+
+print(
+with(wind_daily,
+     windRose(data_frame(ws=mean_speed, wd=dir_circ, 
+                         date=date, station=factor(site)),
+
+              paddle=FALSE, type="station", width=2))
+)
+```
+
+# Now determining the upwelling indeces
+
+```{r}
+wind_UI <- wind_daily %>% 
+  mutate(ui.saws = mean_speed * (cos(dir_circ - 160))) %>% 
+  drop_na
+
+index <- Wind_UI %>% 
+  select("date", "ui.saws") %>% 
+  mutate(saws.condition = ifelse(ui.saws > 0, "upwelling", "downwelling"))
+```
+
+# Visualisation of the data
+
+```{r}
+ggplot(index, aes(x = date, y = ui.saws)) +
+  geom_area(aes( fill = saws.condition)) +
+  geom_line(yintercept = 0)
+```
+
+# Plotting the upwelling indeces
+
+```{r}
+interp <- approx(index$day, index$ui.saws, n = 100000)
+interp_2 <- approx(index$day, index$ui.saws, n = 100000)
+UIi <- data.frame(Day = interp$x, Index = interp$y, Temp = interp2$y) # This is to add temperature as a second axis
+UIi <- data.frame(Day = interp$x, Index = interp$y)
+UIi$saws_condition[UIi$Index >= 0] <- "upwelling"
+UIi$saws_condition[UIi$Index < 0] <- "downwelling"
+
+index_plot_saws <- ggplot(UIi, aes(x=Day, y=Index)) +
+  geom_area(aes(fill=saws_condition), alpha = .4) +
+  geom_line() +
+  geom_hline(yintercept=0) +
+  theme_bw() +
+  # annotate("text", x = 300, y = -12.5, label = "SAWS Data") +
+  # scale_fill_manual(values=c("salmon", "steelblue")) +
+  # scale_x_continuous(expand=c(0, 0)) +
+  # scale_y_reverse() +
+  labs(y= "Upwelling Index") +
+  guides(fill=guide_legend(title="Condition"))
+
+index_plot_saws
+```
+
+
+
+
+
+
+
+
