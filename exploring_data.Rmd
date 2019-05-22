@@ -7,18 +7,33 @@ output: html_document
 
 # Some questions:
   # What is the climatological baseline
-  # Calculate upwelling for all the years ad then it a linear regression to find a trend
-  # How am I spacially going to define upwelling
+  # Calculate upwelling for all the years and then it a linear regression to find a trend
+  # Spacially going to define upwelling
   # Run this on each pixel individually 
   # How will I combine the results for each EBUS to quntify the changes in upwelling
+  
+Climatological baseline varies per dataset. Climatological baseline for:
+  OISST: 1982-01-01", "2017-12-31
+  CMC:
+  G1SST:
+  
+Uwpelling: Spatially defined as all the SST's falling within the 30th percentile range, lasting for a minimum of 2 days and a maximum of 3 days. 
+
+# Loading packages
+
+```{r}
+library(tidyverse)
+library(heatwaveR)
+csv.dir <- "/home/amieroh/Documents/spatial/data/csv"
+```
 
 # Adding column names
 ```{r}
 BC <- read_csv("/home/amieroh/Documents/spatial/data/csv/BC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
 CalC <- read_csv("/home/amieroh/Documents/spatial/data/csv/CalC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
 CC <- read_csv("/home/amieroh/Documents/spatial/data/csv/CC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
-HC <- read_csv("/home/amieroh/Documents/spatial/data/csv/CC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
-
+# HC <- read_csv("/home/amieroh/Documents/spatial/data/csv/HC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
+HC <- fread(paste0(csv.dCalCir, "/HC-avhrr-only-v2.Document-Document.csv"))
 ```
 
 # Monthly data from daily data
@@ -29,7 +44,6 @@ library(plyr)
 library(fasttime)
 
 # functions.R
-
 # a new date class
 setClass('myDate')
 setAs("character", "myDate", function(from) as.Date(fastPOSIXct(from, tz = NULL)))
@@ -39,7 +53,7 @@ fastDate <- function(x, tz = NULL) {
   as.Date(fastPOSIXct(x, tz = tz))
 }
 
-daily2monthly <- function(dailyData) {
+monthly <- function(dailyData) {
   monthlyData <- dailyData %>%
     plyr::mutate(t = fastDate(t)) %>%
     dplyr::mutate(month = floor_date(t, unit = "month")) %>%
@@ -52,29 +66,29 @@ daily2monthly <- function(dailyData) {
   return(monthlyData)
 }
 
-BC_monthly <- daily2monthly(BC)
-CalC_monthly <- daily2monthly(CalC)
-CC_monthly <- daily2monthly(CC)
-HC_monthly <- daily2monthly(HC)
+BC_monthly <- monthly(BC)
+CalC_monthly <- monthly(CalC)
+CC_monthly <- monthly(CC)
+HC_monthly <- monthly(HC)
 
 #inDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
 outDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
-fwrite(BC_monthly,
-       paste0(outDir, "/BC_monthly",
-              format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-",
-              format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(BC_monthly)], ".csv"))
-
-fwrite(CalC_monthly,
-       paste0(outDir, "/BC_monthly",
-              format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-",
-              format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(BC_monthly)], ".csv"))
+# fwrite(BC_monthly,
+#        paste0(outDir, "/BC_monthly",
+#               format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-",
+#               format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(BC_monthly)], ".csv"))
+# 
+# fwrite(CalC_monthly,
+#        paste0(outDir, "/BC_monthly",
+#               format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-", 
+#               format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(BC_monthly)], ".csv"))
 
 # Calculating the climatology
 ts2clm.grid <- function(data) {
   out <- ts2clm(data, x = t, y = temp,
                 climatologyPeriod = c("1982-01-01", "2017-12-31"),
-                robust = FALSE, maxPadLength = 3, windowHalfWidth = 5,
-                pctile = 90, smoothPercentile = TRUE,
+                robust = FALSE, maxPadLength = 3, windowHalfWidth = 2,
+                pctile = 30, smoothPercentile = TRUE,
                 smoothPercentileWidth = 31, clmOnly = FALSE)
   return(out)
 }
@@ -84,27 +98,34 @@ BC_clim <- ddply(BC, .(lon, lat), ts2clm.grid,
 
 CalC_clim <- ddply(CalC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
+
+CC_clim <- ddply(CC, .(lon, lat), ts2clm.grid,
+                 .parallel = TRUE, .progress = "text")
+
+HC <- ddply(HC, .(lon, lat), ts2clm.grid,
+                 .parallel = TRUE, .progress = "text")
 ```
 
-## Seasonal climatology
+# Seasonal climatology
 
 ```{r}
 # a function to create monthly data from daily data
-daily2DJF_JJA <- function(dailyData) {
+dailyseason <- function(dailydata) {
   seasonData <- dailyData %>%
     dplyr::mutate(t = month(t)) %>%
     dplyr::filter(t %in% c(12, 1, 2, 6, 7, 8)) %>%
-    dplyr::mutate(t = dplyr::recode_factor(t, `12` = "DJF", `1` = "DJF", `2` = "DJF",
-                                           `6` = "JJA", `7` = "JJA", `8` = "JJA")) %>%
+    dplyr::mutate(t = dplyr::recode_factor(t, `12` = "DecJanFeb", `1` = "DecJanFeb", `2` = "DecJanFeb",
+                                           `6` = "JuneJulyAug", `7` = "JuneJulyAug", `8` = "JuneJulyAug")) %>%
     dplyr::group_by(lon, lat, t) %>%
     dplyr::summarise(temp = mean(temp, na.rm = TRUE)) %>%
     dplyr::ungroup()
   return(seasonData)
 }
 
-BC_seas <- daily2DJF_JJA(BC)
-CalC_seas <- daily2DJF_JJA(CalC)
+BC_seas <- dailyseason(BC)
+CalC_seas <- dailyseason(CalC)
 
+# Plot seasonal climatologies
 BC_fig1 <- ggplot(BC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
   geom_raster(aes(fill = temp), interpolate = FALSE)
@@ -114,33 +135,83 @@ CalC_fig1 <- ggplot(CalC_seas, aes(x = lon, y = lat)) +
   geom_raster(aes(fill = temp), interpolate = FALSE)
 ```
 
+# Using the detect event function to detect when upwelling events occured. 
 
+```{r}
+OISST_detect2 <- function(dat) {
+  require(heatwaveR)
+  out <- heatwaveR::detect_event(dat)
+  event <- out$event
+  return(event)
+}
 
+setClass('myDate')
+setAs(from = "character", to = "myDate", def = function(from) as.Date(fastPOSIXct(from, tz = NULL)))
 
+BC.ev <- ddply(BC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+CalC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+HC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+CC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
 
+# Here I determine the number of events per annum
+mean_intensity <- function(events) {
+  freq <- events %>%
+    dplyr::mutate(year = year(date_start)) %>%
+    dplyr::select(-date_start, -date_end, -date_peak) %>%
+    dplyr::group_by(lon, lat, year) %>%
+    dplyr::summarise(y = mean(intensity_mean)) %>%
+    dplyr::ungroup() %>%
+    as.tibble()
+}
 
+# Annual mean intensity
+BC_annual <- mean_intensity(BC.ev)
+CalC_annual <- mean_intensity(CalC.ev)
+HC_annual <- mean_intensity(HC.ev)
+CC_annual <- mean_intensity(CC.ev)
 
+# A simple linear function
 
+linFun <- function(annualEvent, poissan = FALSE) {
+  if (poissan) {
+    mod <- glm(y ~ year, family = poisson(link = "log"), data = annualEvent)
+  }
+  else {
+    mod <- lm(y ~ year, data = annualEvent)
+  }
+  trend <- data.frame(slope = summary(mod)$coefficients[2,1] * 10, pval = summary(mod)$coefficients[2,4])
+  # trend <- summary(mod)$coefficients[2,c(1,4)]
+  trend$pbracket <- cut(trend$pval, breaks = c(0, 0.001, 0.01, 0.05, 1))
+  return(trend)
+}
+BC_annualMeanIntTrend <- ddply(BC_annualMeanInt, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
 
+# Maximum intensity trend
+# Calculte the number of events per annum
+max_intensity <- function(events) {
+  freq <- events %>%
+    dplyr::mutate(year = year(date_start)) %>%
+    dplyr::select(-date_start, -date_end, -date_peak) %>%
+    dplyr::group_by(lon, lat, year) %>%
+    dplyr::summarise(y = mean(intensity_max)) %>%
+    dplyr::ungroup() %>%
+    as.tibble()
+}
 
+# Do the annual MaxInts
+BC_annual_max <- max_intensity(BC.ev)
+BC_annualmaxtrend <- ddply(BC_annual_max, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
 
+# The duration of an upwelling event
+Duration <- function(events) {
+  dur <- events %>%
+    dplyr::group_by(lon, lat) %>%
+    dplyr::summarise(y = mean(duration, na.rm = TRUE)) %>%
+    as.tibble()
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+BC_Duration <- Duration(BC_events)
+```
 
 
 
