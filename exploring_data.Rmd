@@ -13,7 +13,7 @@ output: html_document
   # How will I combine the results for each EBUS to quntify the changes in upwelling
   
 Climatological baseline varies per dataset. Climatological baseline for:
-  OISST: 1982-01-01", "2017-12-31
+  OISST: 1982-01-01", "2011-12-31
   CMC:
   G1SST:
   
@@ -86,7 +86,7 @@ outDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
 # Calculating the climatology
 ts2clm.grid <- function(data) {
   out <- ts2clm(data, x = t, y = temp,
-                climatologyPeriod = c("1982-01-01", "2017-12-31"),
+                climatologyPeriod = c("1982-01-01", "2011-12-31"),
                 robust = FALSE, maxPadLength = 3, windowHalfWidth = 2,
                 pctile = 30, smoothPercentile = TRUE,
                 smoothPercentileWidth = 31, clmOnly = FALSE)
@@ -214,6 +214,21 @@ BC_Duration <- Duration(BC_events)
 ```
 
 
+```{r}
+plot <- function(data, bathy) {
+  fig <- ggplot(data, aes(x = lon, y = lat)) +
+    geom_raster(aes(fill = slope)) +
+    scale_fill_gradientn(colours = col1_51,
+                         values = scales::rescale(c(min(data$slope), 0, max(data$slope)))) +
+    stat_contour(data = bathy, aes(x = lon, y = lat, z = z),
+                 col = "black", size = 0.15, breaks = c(-500, -1000, -2000)) +
+    geom_contour(aes(x = lon, y = lat, z = pval),
+                 binwidth = 0.05, breaks = c(0.05),
+                 colour = "white", size = 0.2) + + labs(x = NULL, y = NULL) +
+    plot.parameters
+  return(fig)
+}
+```
 
 
 
