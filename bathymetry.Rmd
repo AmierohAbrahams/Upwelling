@@ -35,12 +35,12 @@ h_lat <- c(-17.5, -7.5); h_lon <- c(-85, -70)
 plot(as.bathy(HC_bathy), image = T)
 
 # Canary Current
-CC_lat <- c(25, 35); cn_lon <- c(-20, -5)
+cn_lat <- c(25, 35); cn_lon <- c(-20, -5)
 # CC_bathy <- as.xyz(getNOAA.bathy(lon1 = cn_lon[1], lon2 = cn_lon[2], lat1 = cn_lat[1], lat2 = cn_lat[2], resolution =  4))
 # colnames(CC_bathy) <- c("lon", "lat", "depth")
-# save(CC_bathy, file = "Data/bathy/cn_bathy.RData")
+#  save(CC_bathy, file = "Data/bathy/CC_bathy.RData")
 load("Data/bathy/CC_bathy.RData")
-#plot(as.bathy(CC_bathy), image = T)
+plot(as.bathy(CC_bathy), image = T)
 
 # California Current
 cl_lat <- c(35, 45); cl_lon <- c(-135, -120)
