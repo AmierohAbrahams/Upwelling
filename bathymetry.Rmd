@@ -1,0 +1,167 @@
+---
+title: "bathymetry"
+author: "Amieroh Abrahams"
+date: "25 May 2019"
+output: html_document
+---
+
+# Loading the packages required to plot the bathymetry
+```{r}
+library(ggplot2)
+library(grid)
+library(plyr)
+library(FNN)
+library(marmap)
+library(PBSmapping)
+```
+
+# Downloading the bathymetry data for each of the EBUS
+
+```{r}
+# Benguela Current
+b_lat <- c(-32.5, -22.5); b_lon <- c(5, 20)
+# BC_bathy <- as.xyz(getNOAA.bathy(lon1 = b_lon[1], lon2 = b_lon[2], lat1 = b_lat[1], lat2 = b_lat[2], resolution = 4))
+# colnames(BC_bathy) <- c("lon", "lat", "depth")
+# save(BC_bathy, file = "Data/bathy/BC_bathy.RData")
+load("Data/bathy/BC_bathy.RData")
+plot(as.bathy(BC_bathy), image = T)
+
+# Humboldt Current
+h_lat <- c(-17.5, -7.5); h_lon <- c(-85, -70)
+# HC_bathy <- as.xyz(getNOAA.bathy(lon1 = h_lon[1], lon2 = h_lon[2], lat1 = h_lat[1], lat2 = h_lat[2], resolution =  4))
+# colnames(HC_bathy) <- c("lon", "lat", "depth")
+# save(HC_bathy, file = "Data/bathy/HC_bathy.RData")
+# load("Data/bathy/HC_bathy.RData")
+plot(as.bathy(HC_bathy), image = T)
+
+# Canary Current
+CC_lat <- c(25, 35); cn_lon <- c(-20, -5)
+# CC_bathy <- as.xyz(getNOAA.bathy(lon1 = cn_lon[1], lon2 = cn_lon[2], lat1 = cn_lat[1], lat2 = cn_lat[2], resolution =  4))
+# colnames(CC_bathy) <- c("lon", "lat", "depth")
+# save(CC_bathy, file = "Data/bathy/cn_bathy.RData")
+load("Data/bathy/CC_bathy.RData")
+#plot(as.bathy(CC_bathy), image = T)
+
+# California Current
+cl_lat <- c(35, 45); cl_lon <- c(-135, -120)
+CalC_bathy <- as.xyz(getNOAA.bathy(lon1 = cl_lon[1], lon2 = cl_lon[2], lat1 = cl_lat[1], lat2 = cl_lat[2], resolution =  4))
+colnames(CalC_bathy) <- c("lon", "lat", "depth")
+# save(CalC_bathy, file = "Data/bathy/CalC_bathy.RData")
+load("Data/bathy/CalC_bathy.RData")
+plot(as.bathy(CalC_bathy), image = T)
+```
+
+## Preparing for the bathymetry plot
+
+```{r}
+## Prep for bathy plot
+# Extract the coastline and border shape files
+
+BC_coastline <- fortify(getRgshhsMap("/home/amieroh/Documents/Masters_2019/Upwelling/gshhs_i.b", xlim = b_lon, ylim = b_lat))
+BC_borders <- fortify(importGSHHS("/home/amieroh/Documents/Masters_2019/Upwelling/wdb_borders_i.b", xlim = b_lon, ylim = b_lat)) # Doesn't plot well...
+# BC_borders <- data.frame(lon = map("worldHires", xlim = b_lon, ylim = b_lat, boundary = FALSE, plot = FALSE)$x,
+#                   lat = map("worldHires", xlim = b_lon, ylim = b_lat, boundary = FALSE, plot = FALSE)$y) # Also not...
+
+HC_coastline <- fortify(getRgshhsMap("/home/amieroh/Documents/Masters_2019/Upwelling/gshhs_i.b", xlim = c(h_lon[1]+360, h_lon[2]+360), ylim = h_lat))
+HC_borders <- fortify(importGSHHS("/home/amieroh/Documents/Masters_2019/Upwelling/wdb_borders_i.b", xlim = h_lon, ylim = h_lat))
+
+CC_coastline <- fortify(getRgshhsMap("/home/amieroh/Documents/Masters_2019/Upwelling/gshhs_i.b", xlim = cn_lon, ylim = cn_lat))
+#CC_borders <- fortify(importGSHHS("/home/amieroh/Documents/Masters_2019/Upwelling/gshhs_i.b", xlim = cn_lon, ylim = cn_lat))
+
+CalC_coastline <- fortify(getRgshhsMap("/home/amieroh/Documents/Masters_2019/Upwelling/gshhs_i.b", xlim = c(cl_lon[1]+360, cl_lon[2]+360), ylim = cl_lat))
+# CalC_borders <- fortify(importGSHHS("/home/amieroh/Documents/Masters_2019/Upwelling/gshhs_i.b", xlim = cl_lon, ylim = cl_lat))
+
+# Functions to bin depths for better plotting
+round_200 <- function(x){
+  if(x > -200){
+    x <- -200
+  } else{
+    x <- x
+  }
+}
+
+cleanBathy <- function(x){
+  x2 <- x[complete.cases(x$depth),]
+  x2$depth <- sapply(x2$depth, round_200)
+  x2$depth <- round_any(x2$depth, 200)
+  return(x2)
+}
+
+b_bathy2 <- cleanBathy(BC_bathy)
+h_bathy2 <- cleanBathy(HC_bathy)
+cn_bathy2 <- cleanBathy(CC_bathy)
+cl_bathy2 <- cleanBathy(CalC_bathy)
+```
+
+# Plotting the Bathymetry
+
+```{r}
+bathyPlot <- function(df){
+  ggplot(data = df, aes(x = long, y = lat)) + theme_bw() +
+    geom_raster(data = df, aes(x = lon, y = lat, fill = depth)) +
+    stat_contour(data = df, aes(x = lon, y = lat, z = depth, alpha = ..level..), 
+                 colour = "black", size = 0.2, binwidth = 200, na.rm = TRUE, show_guide = FALSE) +
+    # geom_polygon(aes(group = group), fill = "grey80", colour = "black", size = 0.2, show_guide = FALSE) +
+    #geom_path(data = borders, aes(x = lon, y = lat)) +
+    guides(font = "bold", colour = "White") + coord_equal() +
+    scale_alpha_continuous(breaks = c(-200, -1000, -2000, -3000, -4000, -5000),
+                           guide_legend(title = "Depth (m)")) +
+    scale_fill_gradient(low = "steelblue4", high = "steelblue1", na.value = "steelblue4", 
+                        breaks = c(-1000, -2000, -3000, -4000, -5000),
+                        guide_legend(title = "Depth (m)")) +
+    coord_cartesian(xlim = xlim, ylim = ylim) +
+    coord_equal() +
+    theme(panel.background = element_blank(),
+          panel.border = element_blank(),
+          axis.title = element_blank(),
+          #axis.text = element_blank(),
+          #axis.ticks = element_blank(),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_blank(),
+          plot.title = element_blank(),
+          legend.text = element_text(size = 7, colour = "White"),
+          legend.title = element_text(size = 7, colour = "White"),
+          legend.key = element_rect(colour = NA, size = 0.2),
+          legend.key.height = unit(0.4, "cm"),
+          legend.background = element_blank(),
+          legend.justification = c(1,0), 
+          legend.position = c(0.17, 0.07))
+}
+
+
+
+b_plot <- bathyPlot(df = b_bathy2)
+b_plot
+
+# Humboldt Plot
+h_plot <- bathyPlot(df = h_bathy2)
+h_plot
+
+# Canary Plot
+cn_plot <- bathyPlot(cn_bathy2, cn_coastline, cn_lon, cn_lat)
+#cn_plot + xlim(cn_lon)+ylim(cn_lat) # Testing
+cn_plot
+
+# California Plot
+cl_plot <- bathyPlot(cl_bathy2)
+cl_plot
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
