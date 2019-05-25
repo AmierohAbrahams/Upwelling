@@ -127,9 +127,6 @@ bathyPlot <- function(df){
           legend.justification = c(1,0), 
           legend.position = c(0.17, 0.07))
 }
-
-
-
 b_plot <- bathyPlot(df = b_bathy2)
 b_plot
 

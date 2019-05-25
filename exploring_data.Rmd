@@ -87,7 +87,7 @@ outDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
 ts2clm.grid <- function(data) {
   out <- ts2clm(data, x = t, y = temp,
                 climatologyPeriod = c("1982-01-01", "2011-12-31"),
-                robust = FALSE, maxPadLength = 3, windowHalfWidth = 2,
+                robust = FALSE, maxPadLength = 3, windowHalfWidth = 1,
                 pctile = 30, smoothPercentile = TRUE,
                 smoothPercentileWidth = 31, clmOnly = FALSE)
   return(out)
