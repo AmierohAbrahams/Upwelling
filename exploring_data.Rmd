@@ -180,11 +180,10 @@ linFun <- function(annualEvent, poissan = FALSE) {
     mod <- lm(y ~ year, data = annualEvent)
   }
   trend <- data.frame(slope = summary(mod)$coefficients[2,1] * 10, pval = summary(mod)$coefficients[2,4])
-  # trend <- summary(mod)$coefficients[2,c(1,4)]
   trend$pbracket <- cut(trend$pval, breaks = c(0, 0.001, 0.01, 0.05, 1))
   return(trend)
 }
-BC_annualMeanIntTrend <- ddply(BC_annualMeanInt, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
+BC_annual_int <- ddply(BC_annualMeanInt, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
 
 # Maximum intensity trend
 # Calculte the number of events per annum
