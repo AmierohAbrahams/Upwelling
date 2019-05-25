@@ -1,0 +1,140 @@
+---
+title: "Bathymetry"
+author: "Amieroh Abrahams"
+date: "22 May 2019"
+output: html_document
+---
+
+```{r}
+library(ncdf4)
+library(data.table)
+library(tidyverse)
+library(reshape2)
+
+ncDir <- "/home/amieroh/Documents/Data/Datasets/GEBCO_2014_Grid"
+csvDir <- "/home/amieroh/Documents/Data/Datasets/GEBCO_2014_Grid/csv"
+bathy.nc <- paste0(ncDir, "/GEBCO_2014_2D.nc")
+
+# Here I specify the regions
+bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
+                   CC = c(10, 30, 10, 20), # Canary Current
+                   CalC = c(30, 50, 115, 130), # California Current
+                   HC = c(23, 48, 70, 150), # Humboldt Current
+                   row.names = c("latmin", "latmax", "lonmin", "lonmax"))
+
+# function to extract the dims and data from OISST netCDFs
+bathy_nc <- function(ncFile, region = region, csvDir = csvDir, negDeg = FALSE) {
+  coords <- bbox[, region]
+  reg.adj <- c(0, 0, 360, 360)
+  if (negDeg)
+    coords <- coords - reg.adj
+  nc <- nc_open(ncFile)
+  LatIdx <- which(nc$dim$lat$vals > coords[1] & nc$dim$lat$vals < coords[2])
+  LonIdx <- which(nc$dim$lon$vals > coords[3] & nc$dim$lon$vals < coords[4])
+  z <- ncvar_get(nc,
+                 varid = "elevation",
+                 start = c(LonIdx[1], LatIdx[1]),
+                 count = c(length(LonIdx), length(LatIdx)))
+  dimnames(z) <- list(lon = round(nc$dim$lon$vals[LonIdx], 4),
+                      lat = round(nc$dim$lat$vals[LatIdx], 4))
+  nc_close(nc)
+  z <-
+    as.tibble(melt(z, value.name = "z"), row.names = NULL) %>%
+    na.omit()
+  if (negDeg)
+    z$lon <- z$lon + 360
+  fwrite(z,
+         file = paste0(csvDir, "/", region, "_bathy.csv"),
+         append = FALSE)
+  rm(z)
+}
+
+bathy_nc(ncFile = bathy.nc, region = "BC", csvDir = csvDir)
+bathy_nc(ncFile = bathy.nc, region = "CC", csvDir = csvDir, negDeg = TRUE)
+bathy_nc(ncFile = bathy.nc, region = "CalC", csvDir = csvDir)
+bathy_nc(ncFile = bathy.nc, region = "HC", csvDir = csvDir, negDeg = TRUE)
+```
+
+# Shorelines
+
+```{r}
+
+bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
+                   CC = c(10, 30, 10, 20), # Canary Current
+                   CalC = c(30, 50, 115, 130), # California Current
+                   HC = c(23, 48, 70, 150), # Humboldt Current
+                   row.names = c("latmin", "latmax", "lonmin", "lonmax"))
+library(rgeos)
+# create shorelines
+makeShore <- function(shoreDir, gshhsDir, region) {
+  require(ggplot2)
+  require(rgeos)
+  require(maptools) # maptools must be loaded after rgeos
+  lims <- bbox[, region]
+  lats <- c(lims[1], lims[2])
+  lons <- c(lims[3], lims[4])
+  shore <- fortify(getRgshhsMap(paste0(gshhsDir, "/gshhs_f.b"),
+                                xlim = lons, ylim = lats, level = 1, no.clip = FALSE, checkPolygons = TRUE))
+  save(shore, file = paste0(shoreDir, "/", region, "-shore.Rdata"))
+}
+
+shoreDir <- "/home/amieroh/Documents/Data/Datasets/GEBCO_2014_Grid/csv"
+gshhsDir <- "/home/amieroh/Documents/Data/Datasets/gshhg-bin-2.3.7"
+
+# make the shores
+makeShore(shoreDir, gshhsDir, "BC")
+makeShore(shoreDir, gshhsDir, "CC")
+makeShore(shoreDir, gshhsDir, "CalC")
+makeShore(shoreDir, gshhsDir, "HC")
+
+# makeShore(shoreDir, gshhsDir, "GS") # doesn't work due to self-intersection; do differently...
+lats <- c(bbox["latmin", "GS"], bbox["latmax", "GS"])
+lons <- c(bbox["lonmin", "GS"], bbox["lonmax", "GS"])
+shore <- Rgshhs(paste0(gshhsDir, "/gshhs_f.b"), ## run Rgshhs directly; returns list
+                xlim = lons, ylim = lats, level = 1, no.clip = FALSE, checkPolygons = TRUE)
+shore <- fortify(shore$SP)
+save(shore, file = paste0(shoreDir, "/", "GS", "-shore.Rdata"))
+remove(shore)
+
+# plot the shorelines
+baseMap(shoreDir, "AC-shore.Rdata")
+baseMap(shoreDir, "BC-shore.Rdata") # ???
+load(paste0(shoreDir, "/", "BC-shore.Rdata")) # the plotting of the BC requires a different lon specification
+coords <- c(-45, -5, -60, -25)
+ggplot(shore, aes(x = lon, y = lat)) +
+  geom_polygon(aes(x = long, y = lat, group = group),
+               fill = "#929292", colour = "black", size = 0.1, show.legend = FALSE) +
+  xlab("Longitude (°E)") +
+  ylab("Latitude (°S)") +
+  coord_fixed(ratio = 1,
+              xlim = c(coords[3], coords[4]),
+              ylim = c(coords[1], coords[2]), expand = FALSE) +
+  theme_bw()
+ggsave(paste0(shoreDir, "/", "BC", "-shore.pdf"), width = 8, height = 8)
+baseMap(shoreDir, "EAC-shore.Rdata")
+baseMap(shoreDir, "KC-shore.Rdata")
+baseMap(shoreDir, "GS-shore.Rdata")
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
