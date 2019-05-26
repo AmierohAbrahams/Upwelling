@@ -88,3 +88,5 @@ system.time(llply(ncList, read_nc, location = "CalC", csv.dir = csv.dir, .parall
 system.time(llply(ncList, read_nc, location = "HC", csv.dir = csv.dir, .parallel = TRUE))
 ```
 
+
+
