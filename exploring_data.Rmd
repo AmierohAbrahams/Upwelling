@@ -22,8 +22,6 @@ Uwpelling: Spatially defined as all the SST's falling within the 30th percentile
 # Loading packages
 
 ```{r}
-library(tidyverse)
-library(heatwaveR)
 csv.dir <- "/home/amieroh/Documents/spatial/data/csv"
 ```
 
@@ -39,9 +37,15 @@ HC <- fread(paste0(csv.dCalCir, "/HC-avhrr-only-v2.Document-Document.csv"))
 # Monthly data from daily data
 
 ```{r}
-require(fasttime)
+library(doMC); doMC::registerDoMC(cores = 4) # multi-core
+require(mgcv)
+library(data.table)
+library(readr)
+library(dplyr)
 library(plyr)
-library(fasttime)
+library(lubridate)
+library(tidyverse)
+
 
 # functions.R
 # a new date class
@@ -110,8 +114,8 @@ HC <- ddply(HC, .(lon, lat), ts2clm.grid,
 
 ```{r}
 # a function to create monthly data from daily data
-dailyseason <- function(dailydata) {
-  seasonData <- dailyData %>%
+dailyseason <- function(dailyData) {
+  seasonal <- dailyData %>%
     dplyr::mutate(t = month(t)) %>%
     dplyr::filter(t %in% c(12, 1, 2, 6, 7, 8)) %>%
     dplyr::mutate(t = dplyr::recode_factor(t, `12` = "DecJanFeb", `1` = "DecJanFeb", `2` = "DecJanFeb",
@@ -119,8 +123,9 @@ dailyseason <- function(dailydata) {
     dplyr::group_by(lon, lat, t) %>%
     dplyr::summarise(temp = mean(temp, na.rm = TRUE)) %>%
     dplyr::ungroup()
-  return(seasonData)
+  return(seasonal)
 }
+
 
 BC_seas <- dailyseason(BC)
 CalC_seas <- dailyseason(CalC)
@@ -170,7 +175,7 @@ CalC_annual <- mean_intensity(CalC.ev)
 HC_annual <- mean_intensity(HC.ev)
 CC_annual <- mean_intensity(CC.ev)
 
-# A simple linear function
+# linear function
 
 linFun <- function(annualEvent, poissan = FALSE) {
   if (poissan) {
@@ -183,7 +188,7 @@ linFun <- function(annualEvent, poissan = FALSE) {
   trend$pbracket <- cut(trend$pval, breaks = c(0, 0.001, 0.01, 0.05, 1))
   return(trend)
 }
-BC_annual_int <- ddply(BC_annualMeanInt, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
+BC_annual_int <- ddply(BC_annual, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
 
 # Maximum intensity trend
 # Calculte the number of events per annum
@@ -209,10 +214,68 @@ Duration <- function(events) {
     as.tibble()
 }
 
-BC_Duration <- Duration(BC_events)
+BC_Duration <- Duration(BC.ev)
 ```
 
+# Creating the shores for the various EBUS
 
+```{r}
+
+bbox <- data.frame(CC = c(25, 35, -20, -5), # Canary Current
+                   row.names = c("latmin", "latmax", "lonmin", "lonmax"))
+
+shoreDir <- "/home/amieroh/Documents/spatial/data/csv/EBUS/shorelines"
+gshhsDir <- "/home/amieroh/Documents/Data/Datasets/gshhg-bin-2.3.7"
+
+# create shorelines
+makeShore <- function(shoreDir, gshhsDir, region) {
+  require(ggplot2)
+  require(rgeos)
+  require(maptools) # maptools must be loaded after rgeos
+  lims <- bbox[, region]
+  lats <- c(lims[1], lims[2])
+  lons <- c(lims[3], lims[4])
+  shore <- fortify(getRgshhsMap(paste0(gshhsDir, "/gshhs_f.b"),
+                                xlim = lons, ylim = lats, level = 1, no.clip = FALSE, checkPolygons = TRUE))
+  save(shore, file = paste0(shoreDir, "/", region, "-shore.Rdata"))
+}
+
+makeShore(shoreDir, gshhsDir, "BC")
+makeShore(shoreDir, gshhsDir, "CC")
+makeShore(shoreDir, gshhsDir, "CalC")
+makeShore(shoreDir, gshhsDir, "HC")
+
+lats <- c(bbox["latmin", "GS"], bbox["latmax", "GS"])
+lons <- c(bbox["lonmin", "GS"], bbox["lonmax", "GS"])
+shore <- Rgshhs(paste0(gshhsDir, "/gshhs_f.b"), ## run Rgshhs directly; returns list
+                xlim = lons, ylim = lats, level = 1, no.clip = FALSE, checkPolygons = TRUE)
+shore <- fortify(shore$SP)
+save(shore, file = paste0(shoreDir, "/", "GS", "-shore.Rdata"))
+remove(shore)
+
+# create the basemap
+baseMap <- function(shoreDir, shoreFile) {
+  load(paste0(shoreDir, "/", shoreFile))
+  region <- sapply(str_extract_all(shoreFile, "\\b[A-Z]+\\b"), paste, collapse = ' ')
+  coords <- bbox[, region]
+  ggplot(shore, aes(x = lon, y = lat)) +
+    geom_polygon(aes(x = long, y = lat, group = group),
+                 fill = "#929292", colour = "black", size = 0.1, show.legend = FALSE) +
+    xlab("Longitude (°E)") +
+    ylab("Latitude (°S)") +
+    coord_fixed(ratio = 1,
+                xlim = c(coords[3], coords[4]),
+                ylim = c(coords[1], coords[2]), expand = FALSE) +
+    theme_bw()
+  ggsave(paste0(shoreDir, "/", region, "-shore.pdf"), width = 8, height = 8)
+}
+
+# Plotting the shoresliens
+baseMap(shoreDir, "BC-shore.Rdata")
+baseMap(shoreDir, "CC-shore.Rdata")
+baseMap(shoreDir, "CalC-shore.Rdata")
+baseMap(shoreDir, "HC-shore.Rdata")
+```
 
 
 

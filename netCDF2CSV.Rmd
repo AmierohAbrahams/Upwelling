@@ -31,18 +31,15 @@ library(heatwaveR)
   # Ryan R. Rykaczewski 3 , Bryan A. Black 4 , Albertus J. Smit 5 and Steven J. Bograd 6
 
 ```{r}
-bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
-                   CC = c(10, 30, 10, 20), # Canary Current
-                   CalC = c(30, 50, 115, 130), # California Current
-                   HC = c(23, 48, 70, 150), # Humboldt Current
+bbox <- data.frame(CC = c(25, 35, -20, -5), # Canary Current
                    row.names = c("latmin", "latmax", "lonmin", "lonmax"))
 
-
 # bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
-#                    CC = c(25,35, -20, -5), # Canary Current
-#                    CalC = c(30, 50, -130, -115), # California Current
+#                    CC = c(10, 30, 10, 20), # Canary Current
+#                    CalC = c(30, 50, 115, 130), # California Current
 #                    HC = c(23, 48, 70, 150), # Humboldt Current
 #                    row.names = c("latmin", "latmax", "lonmin", "lonmax"))
+
 
 
 # Setting path
@@ -82,10 +79,10 @@ strtDate <- str_sub(ncList[1], start = 15, end = 22)
 endDate <- str_sub(ncList[length(ncList)], start = 15, end = 22)
 
 ## apply the function
-system.time(llply(ncList, read_nc, location = "BC", csv.dir = csv.dir, .parallel = TRUE))
+# system.time(llply(ncList, read_nc, location = "BC", csv.dir = csv.dir, .parallel = TRUE))
 system.time(llply(ncList, read_nc, location = "CC", csv.dir = csv.dir, .parallel = TRUE))
-system.time(llply(ncList, read_nc, location = "CalC", csv.dir = csv.dir, .parallel = TRUE))
-system.time(llply(ncList, read_nc, location = "HC", csv.dir = csv.dir, .parallel = TRUE))
+# system.time(llply(ncList, read_nc, location = "CalC", csv.dir = csv.dir, .parallel = TRUE))
+# system.time(llply(ncList, read_nc, location = "HC", csv.dir = csv.dir, .parallel = TRUE))
 ```
 
 
