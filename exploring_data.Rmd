@@ -30,8 +30,7 @@ csv.dir <- "/home/amieroh/Documents/spatial/data/csv"
 BC <- read_csv("/home/amieroh/Documents/spatial/data/csv/BC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
 CalC <- read_csv("/home/amieroh/Documents/spatial/data/csv/CalC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
 CC <- read_csv("/home/amieroh/Documents/spatial/data/csv/CC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
-# HC <- read_csv("/home/amieroh/Documents/spatial/data/csv/HC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
-HC <- fread(paste0(csv.dCalCir, "/HC-avhrr-only-v2.Document-Document.csv"))
+HC <- read_csv("/home/amieroh/Documents/spatial/data/csv/HC-avhrr-only-v2.Document-Document.csv", col_names = c("lon", "lat", "temp", "t"))
 ```
 
 # Monthly data from daily data
@@ -220,8 +219,10 @@ BC_Duration <- Duration(BC.ev)
 # Creating the shores for the various EBUS
 
 ```{r}
-
-bbox <- data.frame(CC = c(25, 35, -20, -5), # Canary Current
+bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
+                   CC = c(25, 35, 340, 355), # Canary Current
+                   CalC = c(35, 45, 225, 240), # California Current
+                   HC = c(-17.5, -7.5, 275, 290), # Humboldt Current
                    row.names = c("latmin", "latmax", "lonmin", "lonmax"))
 
 shoreDir <- "/home/amieroh/Documents/spatial/data/csv/EBUS/shorelines"
