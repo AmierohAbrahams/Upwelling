@@ -8,7 +8,6 @@ output: html_document
 ```{r}
 # Creating the shores for the various EBUS
 
-```{r}
 bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
                    CC = c(25, 35, 340, 355), # Canary Current
                    CalC = c(35, 45, 225, 240), # California Current
@@ -69,7 +68,4 @@ baseMap(shoreDir, "HC-shore.Rdata")
 ```
 
 
-
-
-```
 
