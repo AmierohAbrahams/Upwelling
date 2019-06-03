@@ -5,7 +5,20 @@ date: "03 June 2019"
 output: html_document
 ---
 
+# Loading packages
 # MHW occuring in EBUS
+
+```{r}
+library(doMC); doMC::registerDoMC(cores = 4) # multi-core
+require(mgcv)
+library(data.table)
+library(readr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(tidyverse)
+library(heatwaveR)
+```
 
 # Using the detect event function to detect when upwelling events occured. 
 
@@ -15,6 +28,8 @@ BC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/
 CalC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW/CalC_MHW_climatology.csv")
 CC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW/CC_MHW_climatology.csv")
 HC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW/HC_MHW_climatology.csv")
+
+eventDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/events"
                
 OISST_detect2 <- function(dat) {
   require(heatwaveR)
@@ -27,11 +42,34 @@ setClass('myDate')
 setAs(from = "character", to = "myDate", def = function(from) as.Date(fastPOSIXct(from, tz = NULL)))
 
 BC.ev <- ddply(BC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+fwrite(BC.ev,
+       file = paste0(eventDir, "/BC.ev_MHW.csv"),
+       append = FALSE)
 CalC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+fwrite(CalC.ev,
+       file = paste0(eventDir, "/CalC.ev _MHW.csv"),
+       append = FALSE)
 HC.ev <- ddply(HC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+fwrite(HC.ev,
+       file = paste0(eventDir, "/HC.ev _MHW.csv"),
+       append = FALSE)
 CC.ev <- ddply(CC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+fwrite(CC.ev,
+       file = paste0(eventDir, "/CC.ev _MHW.csv"),
+       append = FALSE)
+```
 
 # Here I determine the number of events per annum
+
+```{r}
+
+events_PADir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/events_PA"
+
+BC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/events/BC.ev_MHW.csv")
+CalC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/events/CalC.ev _MHW.csv")
+CC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/events/CC.ev _MHW.csv")
+HC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/events/HC.ev _MHW.csv")
+
 mean_intensity <- function(events) {
   freq <- events %>%
     dplyr::mutate(year = year(date_start)) %>%
@@ -44,12 +82,26 @@ mean_intensity <- function(events) {
 
 # Annual mean intensity
 BC_annual <- mean_intensity(BC.ev)
+fwrite(BC_annual,
+       file = paste0(events_PADir, "/BC_annual.csv"),
+       append = FALSE)
 CalC_annual <- mean_intensity(CalC.ev)
-HC_annual <- mean_intensity(HC.ev)
+fwrite(CalC_annual,
+       file = paste0(events_PADir, "/CalC_annual.csv"),
+       append = FALSE)
 CC_annual <- mean_intensity(CC.ev)
+fwrite(CC_annual,
+       file = paste0(events_PADir, "/CC_annual.csv"),
+       append = FALSE)
+HC_annual <- mean_intensity(HC.ev)
+fwrite(HC_annual,
+       file = paste0(events_PADir, "/HC_annual.csv"),
+       append = FALSE)
+```
 
 # linear function
 
+```{r}
 linFun <- function(annualEvent, poissan = FALSE) {
   if (poissan) {
     mod <- glm(y ~ year, family = poisson(link = "log"), data = annualEvent)
@@ -62,9 +114,15 @@ linFun <- function(annualEvent, poissan = FALSE) {
   return(trend)
 }
 BC_annual_int <- ddply(BC_annual, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
+```
 
 # Maximum intensity trend
 # Calculte the number of events per annum
+
+```{r}
+
+maxInt <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/maxInt_annual"
+
 max_intensity <- function(events) {
   freq <- events %>%
     dplyr::mutate(year = year(date_start)) %>%
@@ -77,9 +135,26 @@ max_intensity <- function(events) {
 
 # Do the annual MaxInts
 BC_annual_max <- max_intensity(BC.ev)
-BC_annualmaxtrend <- ddply(BC_annual_max, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
+fwrite(BC_annual_max,
+       file = paste0(maxInt, "/BC_annual_max.csv"),
+       append = FALSE)
+CalC_annual_max <- max_intensity(CalC.ev)
+fwrite(CalC_annual_max,
+       file = paste0(maxInt, "/CalC_annual_max.csv"),
+       append = FALSE)
+CC_annual_max <- max_intensity(CC.ev)
+fwrite(CC_annual_max,
+       file = paste0(maxInt, "/CC_annual_max.csv"),
+       append = FALSE)
+HC_annual_max <- max_intensity(HC.ev)
+fwrite(HC_annual_max,
+       file = paste0(maxInt, "/HC_annual_max.csv"),
+       append = FALSE)
+```
 
 # The duration of an upwelling event
+
+```{r}
 Duration <- function(events) {
   dur <- events %>%
     dplyr::group_by(lon, lat) %>%
