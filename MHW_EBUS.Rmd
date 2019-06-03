@@ -155,14 +155,31 @@ fwrite(HC_annual_max,
 # The duration of an upwelling event
 
 ```{r}
+
+durationDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/MHW/events_dur"
+
 Duration <- function(events) {
   dur <- events %>%
     dplyr::group_by(lon, lat) %>%
     dplyr::summarise(y = mean(duration, na.rm = TRUE)) %>%
     as.tibble()
 }
-
 BC_Duration <- Duration(BC.ev)
+fwrite(BC_Duration,
+       file = paste0(durationDir, "/BC_Duration.csv"),
+       append = FALSE)
+CalC_Duration <- Duration(CalC.ev)
+fwrite(CalC_Duration,
+       file = paste0(durationDir, "/CalC_Duration.csv"),
+       append = FALSE)
+CC_Duration <- Duration(CC.ev)
+fwrite(CC_Duration,
+       file = paste0(durationDir, "/CC_Duration.csv"),
+       append = FALSE)
+HC_Duration <- Duration(HC.ev)
+fwrite(HC_Duration,
+       file = paste0(durationDir, "/HC_Duration.csv"),
+       append = FALSE)
 ```
 
 

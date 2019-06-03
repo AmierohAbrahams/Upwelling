@@ -32,7 +32,6 @@ library(plyr)
 library(lubridate)
 library(tidyverse)
 library(heatwaveR)
-
 csv.dir <- "/home/amieroh/Documents/spatial/data/csv"
 ```
 
@@ -51,12 +50,10 @@ HC <- read_csv("/home/amieroh/Documents/spatial/data/csv/HC-avhrr-only-v2.Docume
 # a new date class
 setClass('myDate')
 setAs("character", "myDate", function(from) as.Date(fastPOSIXct(from, tz = NULL)))
-
 # a fast date function
 fastDate <- function(x, tz = NULL) {
   as.Date(fastPOSIXct(x, tz = tz))
 }
-
 monthly <- function(dailyData) {
   monthlyData <- dailyData %>%
     plyr::mutate(t = fastDate(t)) %>%
@@ -69,12 +66,10 @@ monthly <- function(dailyData) {
     dplyr::ungroup()
   return(monthlyData)
 }
-
 BC_monthly <- monthly(BC)
 CalC_monthly <- monthly(CalC)
 CC_monthly <- monthly(CC)
 HC_monthly <- monthly(HC)
-
 #inDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
 outDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
 # fwrite(BC_monthly,
@@ -94,10 +89,8 @@ outDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
 #        paste0(outDir, "/HC_monthly",
 #               format(as.Date(HC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-", 
 #               format(as.Date(HC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(HC_monthly)], ".csv"))
-
 # Calculating the climatology -Upwelling
 clDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling"
-
 ts2clm.grid <- function(data) {
   out <- ts2clm(data, x = t, y = temp,
                 climatologyPeriod = c("1982-01-01", "2011-12-31"),
@@ -106,34 +99,28 @@ ts2clm.grid <- function(data) {
                 smoothPercentileWidth = 31, clmOnly = FALSE)
   return(out)
 }
-
 BC_clim <- ddply(BC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(BC_clim,
        file = paste0(clDir, "/BC_climatology.csv"),
        append = FALSE)
-
 CalC_clim <- ddply(CalC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(CalC_clim,
        file = paste0(clDir, "/CalC_climatology.csv"),
        append = FALSE)
-
 CC_clim <- ddply(CC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(CC_clim,
        file = paste0(clDir, "/CC_climatology.csv"),
        append = FALSE)
-
 HC_clim <- ddply(HC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(HC_clim,
        file = paste0(clDir, "/HC_climatology.csv"),
        append = FALSE)
-
 # Calculating the climatology - MHW
 clDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW"
-
 ts2clm.grid <- function(data) {
   out <- ts2clm(data, x = t, y = temp,
                 climatologyPeriod = c("1982-01-01", "2011-12-31"),
@@ -142,31 +129,26 @@ ts2clm.grid <- function(data) {
                 smoothPercentileWidth = 31, clmOnly = FALSE)
   return(out)
 }
-
 BC_clim_MHW <- ddply(BC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(BC_clim_MHW,
        file = paste0(clDir, "/BC_MHW_climatology.csv"),
        append = FALSE)
-
 CalC_clim_MHW <- ddply(CalC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(CalC_clim_MHW,
        file = paste0(clDir, "/CalC_MHW_climatology.csv"),
        append = FALSE)
-
 CC_clim_MHW <- ddply(CC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(CC_clim_MHW,
        file = paste0(clDir, "/CC_MHW_climatology.csv"),
        append = FALSE)
-
 HC_clim_MHW <- ddply(HC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
 fwrite(HC_clim_MHW,
        file = paste0(clDir, "/HC_MHW_climatology.csv"),
        append = FALSE)
-
 ```
 
 # Seasonal climatology
@@ -184,26 +166,20 @@ dailyseason <- function(dailyData) {
     dplyr::ungroup()
   return(seasonal)
 }
-
-
 BC_seas <- dailyseason(BC)
 CalC_seas <- dailyseason(CalC)
 CC_seas <- dailyseason(CC)
 HC_seas <- dailyseason(HC)
-
 # Plot seasonal climatologies
 BC_fig1 <- ggplot(BC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
   geom_raster(aes(fill = temp), interpolate = FALSE)
-
 CalC_fig1 <- ggplot(CalC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
   geom_raster(aes(fill = temp), interpolate = FALSE)
-
 CC_fig1 <- ggplot(CC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
   geom_raster(aes(fill = temp), interpolate = FALSE)
-
 HC_fig1 <- ggplot(HC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
   geom_raster(aes(fill = temp), interpolate = FALSE)
@@ -212,57 +188,45 @@ HC_fig1 <- ggplot(HC_seas, aes(x = lon, y = lat)) +
 # Using the detect event function to detect when upwelling events occured.
 
 ```{r}
-
 BC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/BC_climatology.csv")
 CalC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/CalC_climatology.csv")
 CC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/CC_climatology.csv")
 HC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/HC_climatology.csv")
-
 OISST_detect2 <- function(dat) {
   require(heatwaveR)
   out <- heatwaveR::detect_event(dat)
   event <- out$event
   return(event)
 }
-
 setClass('myDate')
 setAs(from = "character", to = "myDate", def = function(from) as.Date(fastPOSIXct(from, tz = NULL)))
-
 eventDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events"
-
-
 BC.ev <- ddply(BC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
 fwrite(BC.ev,
        file = paste0(eventDir, "/BC.ev.csv"),
        append = FALSE)
-
 CalC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
 fwrite(CalC.ev,
        file = paste0(eventDir, "/CalC.ev.csv"),
        append = FALSE)
-
 HC.ev <- ddply(HC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
 fwrite(HC.ev,
        file = paste0(eventDir, "/HC.ev.csv"),
        append = FALSE)
-
 CC.ev <- ddply(CC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
 fwrite(CC.ev,
        file = paste0(eventDir, "/CC.ev.csv"),
        append = FALSE)
-
 ```
 
 # Here I determine the number of events per annum
 
 ```{r}
 events_PADir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events_PA"
-
 BC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events/BC.ev.csv")
 CalC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events/CalC.ev.csv")
 CC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events/CC.ev.csv")
 HC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events/HC.ev.csv")
-
 mean_intensity <- function(events) {
   freq <- events %>%
     dplyr::mutate(year = year(date_start)) %>%
@@ -272,7 +236,6 @@ mean_intensity <- function(events) {
     dplyr::ungroup() %>%
     as.tibble()
 }
-
 # Annual mean intensity
 BC_annual <- mean_intensity(BC.ev)
 fwrite(BC_annual,
@@ -329,7 +292,6 @@ max_intensity <- function(events) {
     dplyr::ungroup() %>%
     as.tibble()
 }
-
 # Do the annual MaxInts
 BC_annual_max <- max_intensity(BC.ev)
 fwrite(BC_annual_max,
@@ -340,8 +302,8 @@ fwrite(CalC_annual_max,
        file = paste0(maxInt, "/CalC_annual_max.csv"),
        append = FALSE)
 CC_annual_max <- max_intensity(CC.ev)
-fwrite(CalC_annual_max,
-       file = paste0(maxInt, "/CalC_annual_max.csv"),
+fwrite(CC_annual_max,
+       file = paste0(maxInt, "/CC_annual_max.csv"),
        append = FALSE)
 HC_annual_max <- max_intensity(HC.ev)
 fwrite(HC_annual_max,
@@ -358,34 +320,26 @@ BC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/ev
 CalC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events/CalC.ev.csv")
 CC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events/CC.ev.csv")
 HC.ev <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/events/HC.ev.csv")
-
 Duration <- function(events) {
   dur <- events %>%
     dplyr::group_by(lon, lat) %>%
     dplyr::summarise(y = mean(duration, na.rm = TRUE)) %>%
     as.tibble()
 }
-
 BC_Duration <- Duration(BC.ev)
 fwrite(BC_Duration,
        file = paste0(durationDir, "/BC_Duration.csv"),
        append = FALSE)
-
 CalC_Duration <- Duration(CalC.ev)
 fwrite(CalC_Duration,
        file = paste0(durationDir, "/CalC_Duration.csv"),
        append = FALSE)
-
 CC_Duration <- Duration(CC.ev)
 fwrite(CC_Duration,
        file = paste0(durationDir, "/CC_Duration.csv"),
        append = FALSE)
-
 HC_Duration <- Duration(HC.ev)
 fwrite(HC_Duration,
        file = paste0(durationDir, "/HC_Duration.csv"),
        append = FALSE)
 ```
-
-
-
