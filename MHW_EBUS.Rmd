@@ -1,0 +1,95 @@
+---
+title: "MHW_EBUS"
+author: "Amieroh Abrahams"
+date: "03 June 2019"
+output: html_document
+---
+
+# MHW occuring in EBUS
+
+# Using the detect event function to detect when upwelling events occured. 
+
+```{r}
+
+BC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW/BC_MHW_climatology.csv")
+CalC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW/CalC_MHW_climatology.csv")
+CC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW/CC_MHW_climatology.csv")
+HC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW/HC_MHW_climatology.csv")
+               
+OISST_detect2 <- function(dat) {
+  require(heatwaveR)
+  out <- heatwaveR::detect_event(dat)
+  event <- out$event
+  return(event)
+}
+
+setClass('myDate')
+setAs(from = "character", to = "myDate", def = function(from) as.Date(fastPOSIXct(from, tz = NULL)))
+
+BC.ev <- ddply(BC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+CalC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+HC.ev <- ddply(HC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+CC.ev <- ddply(CC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+
+# Here I determine the number of events per annum
+mean_intensity <- function(events) {
+  freq <- events %>%
+    dplyr::mutate(year = year(date_start)) %>%
+    dplyr::select(-date_start, -date_end, -date_peak) %>%
+    dplyr::group_by(lon, lat, year) %>%
+    dplyr::summarise(y = mean(intensity_mean)) %>%
+    dplyr::ungroup() %>%
+    as.tibble()
+}
+
+# Annual mean intensity
+BC_annual <- mean_intensity(BC.ev)
+CalC_annual <- mean_intensity(CalC.ev)
+HC_annual <- mean_intensity(HC.ev)
+CC_annual <- mean_intensity(CC.ev)
+
+# linear function
+
+linFun <- function(annualEvent, poissan = FALSE) {
+  if (poissan) {
+    mod <- glm(y ~ year, family = poisson(link = "log"), data = annualEvent)
+  }
+  else {
+    mod <- lm(y ~ year, data = annualEvent)
+  }
+  trend <- data.frame(slope = summary(mod)$coefficients[2,1] * 10, pval = summary(mod)$coefficients[2,4])
+  trend$pbracket <- cut(trend$pval, breaks = c(0, 0.001, 0.01, 0.05, 1))
+  return(trend)
+}
+BC_annual_int <- ddply(BC_annual, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
+
+# Maximum intensity trend
+# Calculte the number of events per annum
+max_intensity <- function(events) {
+  freq <- events %>%
+    dplyr::mutate(year = year(date_start)) %>%
+    dplyr::select(-date_start, -date_end, -date_peak) %>%
+    dplyr::group_by(lon, lat, year) %>%
+    dplyr::summarise(y = mean(intensity_max)) %>%
+    dplyr::ungroup() %>%
+    as.tibble()
+}
+
+# Do the annual MaxInts
+BC_annual_max <- max_intensity(BC.ev)
+BC_annualmaxtrend <- ddply(BC_annual_max, .(lon, lat), linFun, poissan = FALSE, .parallel = TRUE)
+
+# The duration of an upwelling event
+Duration <- function(events) {
+  dur <- events %>%
+    dplyr::group_by(lon, lat) %>%
+    dplyr::summarise(y = mean(duration, na.rm = TRUE)) %>%
+    as.tibble()
+}
+
+BC_Duration <- Duration(BC.ev)
+```
+
+
+
+
