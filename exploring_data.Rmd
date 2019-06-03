@@ -214,7 +214,10 @@ HC_fig1 <- ggplot(HC_seas, aes(x = lon, y = lat)) +
 ```{r}
 
 BC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/BC_climatology.csv")
-               
+CalC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/CalC_climatology.csv")
+CC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/CC_climatology.csv")
+HC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/HC_climatology.csv")
+
 OISST_detect2 <- function(dat) {
   require(heatwaveR)
   out <- heatwaveR::detect_event(dat)
@@ -227,8 +230,8 @@ setAs(from = "character", to = "myDate", def = function(from) as.Date(fastPOSIXc
 
 BC.ev <- ddply(BC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
 CalC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
-HC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
-CC.ev <- ddply(CalC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+HC.ev <- ddply(HC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
+CC.ev <- ddply(CC_clim, .(lon, lat), OISST_detect2, .parallel = TRUE, .progress = "text")
 
 # Here I determine the number of events per annum
 mean_intensity <- function(events) {
