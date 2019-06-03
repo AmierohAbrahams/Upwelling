@@ -6,6 +6,7 @@ output: html_document
 ---
 
 # Some questions:
+
   # What is the climatological baseline
   # Calculate upwelling for all the years and then it a linear regression to find a trend
   # Spacially going to define upwelling
@@ -14,7 +15,7 @@ output: html_document
   
 Climatological baseline varies per dataset. Climatological baseline for:
   OISST: 1982-01-01", "2011-12-31
-  CMC:
+  CMC: 1991 - 2017 
   G1SST:
   
 Uwpelling: Spatially defined as all the SST's falling within the 30th percentile range, lasting for a minimum of 2 days and a maximum of 3 days. 
@@ -22,6 +23,16 @@ Uwpelling: Spatially defined as all the SST's falling within the 30th percentile
 # Loading packages
 
 ```{r}
+library(doMC); doMC::registerDoMC(cores = 4) # multi-core
+require(mgcv)
+library(data.table)
+library(readr)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(tidyverse)
+library(heatwaveR)
+
 csv.dir <- "/home/amieroh/Documents/spatial/data/csv"
 ```
 
@@ -36,16 +47,6 @@ HC <- read_csv("/home/amieroh/Documents/spatial/data/csv/HC-avhrr-only-v2.Docume
 # Monthly data from daily data
 
 ```{r}
-library(doMC); doMC::registerDoMC(cores = 4) # multi-core
-require(mgcv)
-library(data.table)
-library(readr)
-library(dplyr)
-library(plyr)
-library(lubridate)
-library(tidyverse)
-
-
 # functions.R
 # a new date class
 setClass('myDate')
@@ -82,11 +83,21 @@ outDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/data"
 #               format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(BC_monthly)], ".csv"))
 # 
 # fwrite(CalC_monthly,
-#        paste0(outDir, "/BC_monthly",
-#               format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-", 
-#               format(as.Date(BC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(BC_monthly)], ".csv"))
+#        paste0(outDir, "/CalC_monthly",
+#               format(as.Date(CalC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-", 
+#               format(as.Date(CalC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(CalC_monthly)], ".csv"))
+# fwrite(CC_monthly,
+#        paste0(outDir, "/CC_monthly",
+#               format(as.Date(CC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-", 
+#               format(as.Date(CC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(CC_monthly)], ".csv"))
+# fwrite(HC_monthly,
+#        paste0(outDir, "/HC_monthly",
+#               format(as.Date(HC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[1], "-", 
+#               format(as.Date(HC_monthly$month, format = "%Y%m%d"), "%Y%m%d")[nrow(HC_monthly)], ".csv"))
 
-# Calculating the climatology
+# Calculating the climatology -Upwelling
+clDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling"
+
 ts2clm.grid <- function(data) {
   out <- ts2clm(data, x = t, y = temp,
                 climatologyPeriod = c("1982-01-01", "2011-12-31"),
@@ -98,15 +109,64 @@ ts2clm.grid <- function(data) {
 
 BC_clim <- ddply(BC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
+fwrite(BC_clim,
+       file = paste0(clDir, "/BC_climatology.csv"),
+       append = FALSE)
 
 CalC_clim <- ddply(CalC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
+fwrite(CalC_clim,
+       file = paste0(clDir, "/CalC_climatology.csv"),
+       append = FALSE)
 
 CC_clim <- ddply(CC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
+fwrite(CC_clim,
+       file = paste0(clDir, "/CC_climatology.csv"),
+       append = FALSE)
 
-HC <- ddply(HC, .(lon, lat), ts2clm.grid,
+HC_clim <- ddply(HC, .(lon, lat), ts2clm.grid,
                  .parallel = TRUE, .progress = "text")
+fwrite(HC_clim,
+       file = paste0(clDir, "/HC_climatology.csv"),
+       append = FALSE)
+
+# Calculating the climatology - MHW
+clDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/MHW"
+
+ts2clm.grid <- function(data) {
+  out <- ts2clm(data, x = t, y = temp,
+                climatologyPeriod = c("1982-01-01", "2011-12-31"),
+                robust = FALSE, maxPadLength = 3, windowHalfWidth = 5,
+                pctile = 90, smoothPercentile = TRUE,
+                smoothPercentileWidth = 31, clmOnly = FALSE)
+  return(out)
+}
+
+BC_clim_MHW <- ddply(BC, .(lon, lat), ts2clm.grid,
+                 .parallel = TRUE, .progress = "text")
+fwrite(BC_clim_MHW,
+       file = paste0(clDir, "/BC_MHW_climatology.csv"),
+       append = FALSE)
+
+CalC_clim_MHW <- ddply(CalC, .(lon, lat), ts2clm.grid,
+                 .parallel = TRUE, .progress = "text")
+fwrite(CalC_clim_MHW,
+       file = paste0(clDir, "/CalC_MHW_climatology.csv"),
+       append = FALSE)
+
+CC_clim_MHW <- ddply(CC, .(lon, lat), ts2clm.grid,
+                 .parallel = TRUE, .progress = "text")
+fwrite(CC_clim_MHW,
+       file = paste0(clDir, "/CC_MHW_climatology.csv"),
+       append = FALSE)
+
+HC_clim_MHW <- ddply(HC, .(lon, lat), ts2clm.grid,
+                 .parallel = TRUE, .progress = "text")
+fwrite(HC_clim_MHW,
+       file = paste0(clDir, "/HC_MHW_climatology.csv"),
+       append = FALSE)
+
 ```
 
 # Seasonal climatology
@@ -128,6 +188,8 @@ dailyseason <- function(dailyData) {
 
 BC_seas <- dailyseason(BC)
 CalC_seas <- dailyseason(CalC)
+CC_seas <- dailyseason(CC)
+HC_seas <- dailyseason(HC)
 
 # Plot seasonal climatologies
 BC_fig1 <- ggplot(BC_seas, aes(x = lon, y = lat)) +
@@ -137,11 +199,22 @@ BC_fig1 <- ggplot(BC_seas, aes(x = lon, y = lat)) +
 CalC_fig1 <- ggplot(CalC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
   geom_raster(aes(fill = temp), interpolate = FALSE)
+
+CC_fig1 <- ggplot(CC_seas, aes(x = lon, y = lat)) +
+  facet_wrap(~ t) +
+  geom_raster(aes(fill = temp), interpolate = FALSE)
+
+HC_fig1 <- ggplot(HC_seas, aes(x = lon, y = lat)) +
+  facet_wrap(~ t) +
+  geom_raster(aes(fill = temp), interpolate = FALSE)
 ```
 
 # Using the detect event function to detect when upwelling events occured. 
 
 ```{r}
+
+BC_clim <- read_csv("/home/amieroh/Documents/Masters_2019/Upwelling/global_EBUS/Climatologies/Upwelling/BC_climatology.csv")
+               
 OISST_detect2 <- function(dat) {
   require(heatwaveR)
   out <- heatwaveR::detect_event(dat)
