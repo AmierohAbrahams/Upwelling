@@ -1,0 +1,48 @@
+---
+title: "Untitled"
+author: "Amieroh Abrahams"
+date: "04 June 2019"
+output: html_document
+---
+
+# Introduction
+
+
+Eastern Boundry upwelling Systems (EBUS) are regarded as biologically productive marine regions  cover approximatley 1% of the world’s ocean surface, but despite this these are among the most productive regions of the world [@pauly] and provide ecosystem, economic and recreational services to about 80 million people living along their coasts [@Garcia-Reyes]. Globally, there are four major EBUS. These include the Benguela Current off south-western Africa, the Canary Current off north-western Africa together with its northern extension off the Iberian Peninsula of south-western Europe, the Peru-Humboldt Current off western South America, and the California Current off the western continental USA and north-western Mexico [@bakun ; @pauly]. Each of these systems are characterized as vast regions of coastal ocean occurring along the western shores of continents bordering the Pacific and Atlantic Oceans. The high level of productivity within upwelling systems result from broad-scale atmospheric pressure systems favouring alongshore, equatorward winds.
+
+The duration and intensity of coastal upwelling are known to play a critical role in the phenology of key marine ecosystem processes. Similarly, changes in the characteristics of upwelling are shown to cause large disturbances to ecosystems at several trophic levels [@wang]. In these upwelling systems, the high productivity supports vast and diverse marine populations. The mechanisms leading to an upwelling event are known to originate from large scale atmospheric-oceanographic interations, the intensity of upwelling favourable winds are influenced by climate variablity (Montecinos et al., 2003; Macias et al., 2012) and are predicted to be influenced by global warming. Research done by Bakun 1990 predicted that global warming will result influece atmospheric pressure gradients and thus influence coastal wind which as previously mention, influence coastal upwelling. 
+
+Understanding how the frequency, duration and intensity of upwelling hanged is of vital importance. For example, weaker upwelling may limit nutrient levels and potentially negativley influence primary production. In contrast, stronger upwelling may increase nutrient input and at the same time increase offshore transportation.
+
+# MHW
+
+Ocean temperature are continuing to change as a result of anthropogenic forcing of the climate system. This change is generally understood to result in a rise in global mean surface temperature (Pachauri et al., 2014). The chnage in global mean surface temperatures has resulted in an increase in the frequency and duration of extreme events. These extreme events largely affect humans and the ecosystems within a short time period. Extreme events are shown to have a major imapct and lead to server consequences (e.g. Shongwe et al., 2009). 
+
+Heatwaves are often reffered to as an atmospheric phenomena using subjective definitions such as a period of anomoulsly hot weather. In recent times it has been reported that periods of prolonged warming (>5 days) have become more frequent, more intense and tend to last longer in some parts of the global ocean. These events are classified as marine hetwaves (MHW) or extreme thermal events. These events are shown to be infrequent and so does not contribute to the oceans climatological thermal regime. This periodic extreme heating implies that organisms are unable to become physiologically adated to tolerate their excessive heat impact, thus their thermal pulses often exceed organism thermal survival limits. As a result, marine heatwaves have largely resulted in a change in the abundance and distribution of marine bethic ecosystems. In the Mediterranean in 2003, extreme temperatures affected up to 80% of the gorgonian fan colonies in some areas (Garrabou et al., 2009; Olita et al., 2007), and off the coast of Western Australia in 2011 (Feng et al., 2013; Pearce and Feng, 2013; Wernberg et al., 2013) a thermal event caused substantial loss of temperate seaweeds and a tropicalisation of reef fishes
+
+By assessing the mean, duration and intensity of MHW and upwelling events within EBUS provides a deeper understanding of how climate change is unfolding, and add to a basic understanding of the drivers of climate change. Alexander et al. 2016 has theoretically proven that the frequency and intensity of extreme climatic events are increasing. This appears to be occuring within the ocean at a global scale. EBUS are unique in that they occupy 1% of the ocean but are regarded as the most productive regions. MHW or extreme events occuring within this region will have a significant impact on the species diversity, distribution and reproduction.
+
+
+Since EBUS are one of the most productive regions of the ocean it is important to understand the impacts of MHW within this region and how the intensity and duration of HMW and upwelling events varied within upwelling systems over the past three decades. This study undertakes an assessment in the properties of MHW and upwelling events associated with the worlds four eastern boundry upwelling systems, namely the Benguela (BC), Humboldt (HC), Canary (CC) and California current(CalC). We are specifically interested in identifying whether or not we see a variations in the frequency, intensity and duration of MHW and upwelling events occuring within the region over the past three decades. We therefore undertake an analysis of daily sea surface temperature records and wind data. With the wind data we aim to determine whether wind speed and direction influence the intensity of upwelling events within EBUS.  
+
+
+# Methods
+## Data
+
+To evaluate whether the frequency,intensity and duration of upwelling events and marine heatwaves have varied within EBUS over the past three decades, I made use of sea surface temperature data (SST) and wind data. This study made use of three satellite-derived SST datasets. The first dataset is the global 0.25° National Oceanic and Atmospheric Administration (NOAA) daily Optimally-Interpolated Sea Surface Temperature (dOISST, v.2) (Reynolds et al., 2007; Banzon et al., 2016) from which upwelling events as well as marine heatwave metrics and the rate at which they change were calculated. The second dataset, the CMC dataset, is a version 3.0 Group for High Resolution Sea Surface Temperature (GHRSST) Level 4 dataset with a 10km resolution constructed by the Canadian Meteorological Center (CMC). The CMC dataset combines infrared satellite SST at numerous points in the time series from the AVHRR, the European Meteorological Operational-A (METOP-A) and Operational-B (METOP-B) platforms, and microwave SST data from the Advanced Microwave Scanning Radiometer 2 in conjunction with in situ observations of SST from ships and buoys from the ICOADS program.
+
+# Events
+
+## MarineheatWaves 
+When examining the variation of extreme events annually the MHW definition of Hobday et al. (2016) was used. This algorithm requires at least 30 years of daily sea surface temperature data. Using this algorithm it finds the period where temperature exceeds a threshold of 90th percentile. These events are atypical relative to the climatology and various metrics defining marine heatwaves may be calculated, for this study we included the count of events, maximum intensity and duration. The calculation of extreme thermal events used the MHW algorithm as implemented by the 'heatwaveR'package (Schlegel and Smit, 2018), with a 30-year climatological baseline from 1982-01-01 to 2011-12-31.
+
+## Upwelling
+13th percentile. PLOTTING 
+
+Linear decadal trends
+Linear decadal trends in mean monthly SST, MHW days, their duration and mean intensity were calcualted using a Generalized Least Squares fitted with restricted maximum liklihood. 
+
+
+
+
+

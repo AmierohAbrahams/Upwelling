@@ -5,15 +5,35 @@ date: "26 May 2019"
 output: html_document
 ---
 
+# Loading libraries
+
 ```{r}
-nc.dir <- "/home/amieroh/Documents/Data/Datasets/CMC_global"
-csv.dir <- "/home/amieroh/Documents/spatial/data/csv"
+library(ncdf4) # library for processing netCDFs
+library(ncdf4)
+library(data.table)
+library(tidyverse)
+library(reshape2)
+library(plyr)
+library(lubridate)
+library(stringr)
+library(doMC); doMC::registerDoMC(cores = 4)
+library(heatwaveR)
+```
+
+```{r}
+ncDir <- "/home/amieroh/Documents/Data/Datasets/CMC_EBUS/BC"
+csvDir <- "/home/amieroh/Documents/spatial/data/csv/CMC"
 
 bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
-                   CC = c(10, 30, 10, 20), # Canary Current
-                   CalC = c(30, 50, 115, 130), # California Current
-                   HC = c(23, 48, 70, 150), # Humboldt Current
+                   CC = c(25, 35, 340, 355), # Canary Current
+                   CalC = c(35, 45, 225, 240), # California Current
+                   HC = c(-17.5, -7.5, 275, 290), # Humboldt Current
                    row.names = c("latmin", "latmax", "lonmin", "lonmax"))
+
+
+#          1         2         3         4         5         6        7
+# 123456789012345678901234567890123456789012345678901234567890123456789012
+# 19910901120000-CMC-L4_GHRSST-SSTfnd-CMC0.2deg-GLOB-v02.0-fv02.0_subset.nc
 
 read_nc <- function(ncDir = ncDir, region = region, csvDir = csvDir) {
   coords <- bbox[, region]
@@ -26,7 +46,7 @@ read_nc <- function(ncDir = ncDir, region = region, csvDir = csvDir) {
     nc <- nc_open(ncFile)
     pathLen <- nchar(paste0(ncDir, "/", region)) + 1
     fNameStem <-
-      substr(ncFile, pathLen + 37, pathLen + 56)
+      substr(ncFile, pathLen + 9, pathLen + 80)
     fDate <- substr(ncFile, pathLen + 1, pathLen + 8)
     sst <- ncvar_get(nc, varid = "analysed_sst") %>%
       round(4)
@@ -47,13 +67,13 @@ read_nc <- function(ncDir = ncDir, region = region, csvDir = csvDir) {
 
 # the list of files
 ncList <- list.files(path = nc.dir, pattern = "*.nc", full.names = TRUE, include.dirs = TRUE)
-strtDate <- str_sub(ncList[1], start = 15, end = 22) #### Chnage this accordigly 
-endDate <- str_sub(ncList[length(ncList)], start = 15, end = 22) #### Chnage this accordigly 
+strtDate <- str_sub(ncList[1], start = 1, end = 8) #### Chnage this accordigly 
+endDate <- str_sub(ncList[length(ncList)], start = 1, end = 8) #### Chnage this accordigly 
 
 ## apply the function
-system.time(llply(ncList, read_nc, region = "BC", csv.dir = csv.dir, .parallel = TRUE))
-system.time(llply(ncList, read_nc, region = "CC", csv.dir = csv.dir, .parallel = TRUE))
-system.time(llply(ncList, read_nc, region = "CalC", csv.dir = csv.dir, .parallel = TRUE))
-system.time(llply(ncList, read_nc, region = "HC", csv.dir = csv.dir, .parallel = TRUE))
+system.time(llply(ncList, read_nc, region = "BC", csvDir = csvDir, .parallel = TRUE))
+system.time(llply(ncList, read_nc, region = "CC", csvDir = csvDir, .parallel = TRUE))
+system.time(llply(ncList, read_nc, region = "CalC", csvDir = csvDir, .parallel = TRUE))
+system.time(llply(ncList, read_nc, region = "HC", csvDir = csvDir, .parallel = TRUE))
 ```
 
