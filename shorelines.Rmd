@@ -14,7 +14,7 @@ bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
                    HC = c(-17.5, -7.5, 275, 290), # Humboldt Current
                    row.names = c("latmin", "latmax", "lonmin", "lonmax"))
 
-shoreDir <- "/home/amieroh/Documents/spatial/data/csv/EBUS/shorelines"
+shoreDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/shorelines"
 gshhsDir <- "/home/amieroh/Documents/Data/Datasets/gshhg-bin-2.3.7"
 
 # create shorelines
