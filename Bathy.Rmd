@@ -14,7 +14,7 @@ library(tidyverse)
 library(reshape2)
 
 ncDir <- "/home/amieroh/Documents/Data/Datasets/GEBCO_2014_Grid"
-csvDir <- "/home/amieroh/Documents/Data/Datasets/GEBCO_2014_Grid/csv"
+csvDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/Data/bathy_EBUS/bathy"
 bathy.nc <- paste0(ncDir, "/GEBCO_2014_2D.nc")
 
 # Here I specify the regions
@@ -52,8 +52,8 @@ bathy_nc <- function(ncFile, region = region, csvDir = csvDir, negDeg = FALSE) {
 }
 
 bathy_nc(ncFile = bathy.nc, region = "BC", csvDir = csvDir)
-bathy_nc(ncFile = bathy.nc, region = "CC", csvDir = csvDir, negDeg = TRUE)
+bathy_nc(ncFile = bathy.nc, region = "CC", csvDir = csvDir)
 bathy_nc(ncFile = bathy.nc, region = "CalC", csvDir = csvDir)
-bathy_nc(ncFile = bathy.nc, region = "HC", csvDir = csvDir, negDeg = TRUE)
+bathy_nc(ncFile = bathy.nc, region = "HC", csvDir = csvDir)
 ```
 

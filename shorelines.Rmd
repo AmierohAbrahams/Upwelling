@@ -9,9 +9,9 @@ output: html_document
 # Creating the shores for the various EBUS
 
 bbox <- data.frame(BC = c(-35, -25, 15, 20), # Benguela Current
-                   CC = c(25, 35, 340, 355), # Canary Current
-                   CalC = c(35, 45, 225, 240), # California Current
-                   HC = c(-17.5, -7.5, 275, 290), # Humboldt Current
+                   CC = c(25, 35, -20, -5), # Canary Current
+                   CalC = c(35, 45, -135, -120), # California Current
+                   HC = c(-17.5, -7.5, -85, -70), # Humboldt Current
                    row.names = c("latmin", "latmax", "lonmin", "lonmax"))
 
 shoreDir <- "/home/amieroh/Documents/Masters_2019/Upwelling/Data/shores"
@@ -47,7 +47,7 @@ remove(shore)
 baseMap <- function(shoreDir, shoreFile) {
   load(paste0(shoreDir, "/", shoreFile))
   region <- sapply(str_extract_all(shoreFile, "\\b[A-Z]+\\b"), paste, collapse = ' ')
-  coords <- bbox[, region] # Chnge the coordinates here to plot the region of interest if does not correspond eg c(-35, -25, 15, 20)
+  coords <- bbox[, region] # Chnge the coordinates here to plot the region of interest if does not correspond eg 
   ggplot(shore, aes(x = lon, y = lat)) +
     geom_polygon(aes(x = long, y = lat, group = group),
                  fill = "#929292", colour = "black", size = 0.1, show.legend = FALSE) +
