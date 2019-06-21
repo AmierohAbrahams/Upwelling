@@ -6,7 +6,6 @@ output: html_document
 ---
 
 # Some questions:
-
   # What is the climatological baseline
   # Calculate upwelling for all the years and then it a linear regression to find a trend
   # Spacially going to define upwelling
@@ -154,6 +153,13 @@ fwrite(HC_clim_MHW,
 # Seasonal climatology
 
 ```{r}
+library(PBSmapping)
+library(viridis)
+gshhsDir <- "/home/amieroh/Documents/Data/Datasets/gshhg-bin-2.3.7"
+lats <- c(-90, 90)
+lons <- c(0, 360)
+shore <- importGSHHS(paste0(gshhsDir, "/gshhs_i.b"), xlim = lons, ylim = lats, maxLevel = 1, useWest = FALSE)
+
 # a function to create monthly data from daily data
 dailyseason <- function(dailyData) {
   seasonal <- dailyData %>%
@@ -170,19 +176,63 @@ BC_seas <- dailyseason(BC)
 CalC_seas <- dailyseason(CalC)
 CC_seas <- dailyseason(CC)
 HC_seas <- dailyseason(HC)
+
 # Plot seasonal climatologies
 BC_fig1 <- ggplot(BC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
-  geom_raster(aes(fill = temp), interpolate = FALSE)
+  geom_raster(aes(fill = temp), interpolate = FALSE) +
+  scale_fill_viridis(name = "°C") +
+  geom_polygon(data = shore, aes(x = X, y = Y, group = PID),
+               colour = "black", fill = "gray98", size = 0.2) +
+   coord_fixed(ratio = 1, xlim = c(10.5, 39.5), ylim = c(-39.5, -25.5),
+                expand = TRUE) +
+    scale_x_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°E", sep = "")) +
+    scale_y_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°S", sep = ""))
+ggsave(plot = BC_fig1, filename = "/home/amieroh/Documents/Masters_2019/Upwelling/figures/seasonal_climatologies/BC_fig1.pdf")
+
 CalC_fig1 <- ggplot(CalC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
-  geom_raster(aes(fill = temp), interpolate = FALSE)
+  geom_raster(aes(fill = temp), interpolate = FALSE) +
+  scale_fill_viridis(name = "°C") +
+  geom_polygon(data = shore, aes(x = X, y = Y, group = PID),
+               colour = "black", fill = "gray98", size = 0.2) +
+   coord_fixed(ratio = 1, xlim = c(200, 300), ylim = c(20, 70),
+                expand = TRUE) +
+    scale_x_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°E", sep = "")) +
+    scale_y_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°S", sep = ""))
+ggsave(plot = CalC_fig1, filename = "/home/amieroh/Documents/Masters_2019/Upwelling/figures/seasonal_climatologies/CalC_fig1.pdf")
+
 CC_fig1 <- ggplot(CC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
-  geom_raster(aes(fill = temp), interpolate = FALSE)
+  geom_raster(aes(fill = temp), interpolate = FALSE) +
+  scale_fill_viridis(name = "°C") +
+  geom_polygon(data = shore, aes(x = X, y = Y, group = PID),
+               colour = "black", fill = "gray98", size = 0.2) +
+   coord_fixed(ratio = 1, xlim = c(330, 350), ylim = c(20, 40),
+                expand = TRUE) +
+    scale_x_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°E", sep = "")) +
+    scale_y_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°S", sep = ""))
+ggsave(plot = CC_fig1, filename = "/home/amieroh/Documents/Masters_2019/Upwelling/figures/seasonal_climatologies/CC_fig1.pdf")
+
 HC_fig1 <- ggplot(HC_seas, aes(x = lon, y = lat)) +
   facet_wrap(~ t) +
-  geom_raster(aes(fill = temp), interpolate = FALSE)
+  geom_raster(aes(fill = temp), interpolate = FALSE) +
+  scale_fill_viridis(name = "°C") +
+  geom_polygon(data = shore, aes(x = X, y = Y, group = PID),
+               colour = "black", fill = "gray98", size = 0.2) +
+   coord_fixed(ratio = 1, xlim = c(260, 350), ylim = c(10, -60),
+                expand = TRUE) +
+    scale_x_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°E", sep = "")) +
+    scale_y_continuous(expand = c(0, 0),
+                       labels = scales::unit_format(unit = "°S", sep = ""))
+ggsave(plot = HC_fig1, filename = "/home/amieroh/Documents/Masters_2019/Upwelling/figures/seasonal_climatologies/HC_fig1.pdf")
 ```
 
 # Using the detect event function to detect when upwelling events occured.
