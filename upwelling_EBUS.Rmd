@@ -392,4 +392,39 @@ HC_Duration <- Duration(HC.ev)
 fwrite(HC_Duration,
        file = paste0(durationDir, "/HC_Duration.csv"),
        append = FALSE)
+
+# loading data with fread
+
+
+
+
+gv.plot <- function(data, plot.parameters, bathy, region) {
+
+  
+  
+  fig <- ggplot(data, aes(x = lon, y = lat)) +
+    geom_raster(aes(fill = y)) +
+    scale_fill_continuous_sequential(palette = "PuBuGn", na.value = "#011789", rev = TRUE) +
+    stat_contour(data = bathy, aes(x = lon, y = lat, z = z),
+                 col = "black", size = 0.15, breaks = c(-500, -1000, -2000)) +
+    geom_polygon(data = eke, aes(long, lat, group = group),
+                 fill = alpha("gray50", 0.5), colour = "navy", size = 0.3) +
+    geom_polygon(data = mke, aes(long, lat, group = group),
+                 fill = alpha("gray50", 0.5), colour = "red3", size = 0.3) +
+    guides(alpha = "none",
+           fill = guide_colourbar(title = "[days/yr]",
+                                  frame.colour = "black",
+                                  frame.linewidth = 0.4,
+                                  ticks.colour = "black",
+                                  barheight = unit(2, units = "mm"),
+                                  barwidth = unit(21, units = "mm"),
+                                  draw.ulim = F,
+                                  title.position = 'left',
+                                  title.hjust = 0.5,
+                                  label.hjust = 0.5)) +
+    theme_map() + labs(x = NULL, y = NULL) +
+    plot.parameters
+  return(fig)
+}
+
 ```
