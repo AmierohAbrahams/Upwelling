@@ -478,6 +478,5 @@ theme_map <- function(...) {
     )
 }
 
-test1 <- gv.plot(BC_dur, BC.layers, BC_bathy, "BC")
-
+AC.fig09 <- gv.plot(BC_dur, BC.layers, BC_bathy, "BC")
 ```
